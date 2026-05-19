@@ -1,14 +1,18 @@
-"""Funciones de validacion de datos para el sistema de inventario."""
+"""Validadores de datos para el inventario.
+
+Aquí checamos que los datos no vengan chuecos antes de crear un Producto.
+Más vale prevenir que debuggear a las 2am.
+"""
 
 
 def validar_sku(sku) -> bool:
-    """Valida que el SKU no este vacio.
+    """Verifica que el SKU no venga vacío o puro espacio en blanco.
 
     Args:
-        sku: El SKU a validar.
+        sku: El identificador a revisar.
 
     Returns:
-        True si el SKU es valido, False si no.
+        True si tiene algo útil, False si es None, vacío o puro aire.
     """
     if not sku or not str(sku).strip():
         return False
@@ -16,13 +20,15 @@ def validar_sku(sku) -> bool:
 
 
 def validar_precio(precio) -> bool:
-    """Valida que el precio sea un numero >= 0.
+    """Checa que el precio sea un número y que no sea negativo.
+
+    Porque nadie vende laptops a -$5000... aunque sería buen negocio para el comprador.
 
     Args:
-        precio: El precio a validar.
+        precio: El valor a validar (puede venir como string del CSV).
 
     Returns:
-        True si el precio es valido, False si no.
+        True si se puede convertir a float y es >= 0.
     """
     try:
         precio_num = float(precio)
@@ -32,13 +38,15 @@ def validar_precio(precio) -> bool:
 
 
 def validar_stock(stock) -> bool:
-    """Valida que el stock sea un entero >= 0.
+    """Verifica que el stock sea un entero no negativo.
+
+    No puedes tener -3 laptops en bodega... ¿o sí?
 
     Args:
-        stock: El valor de stock a validar.
+        stock: Valor a validar (puede venir como string del CSV).
 
     Returns:
-        True si el stock es valido, False si no.
+        True si es un entero >= 0, False para cualquier cosa rara.
     """
     try:
         stock_num = int(stock)
@@ -48,25 +56,31 @@ def validar_stock(stock) -> bool:
 
 
 def validar_producto(sku, nombre, categoria, precio, stock, stock_minimo) -> tuple:
-    """Valida todos los campos necesarios para crear un Producto.
+    """Pasa todos los campos por el filtro antes de crear un Producto.
+
+    Revisa cada campo uno por uno y si algo falla, retorna cuál fue
+    el problema para que el usuario sepa qué corregir.
 
     Args:
-        sku: Identificador unico del producto.
-        nombre: Nombre descriptivo del producto.
-        categoria: Categoria del producto.
-        precio: Precio unitario (debe ser un numero >= 0).
-        stock: Cantidad actual en inventario (debe ser entero >= 0).
-        stock_minimo: Nivel minimo de stock (debe ser entero >= 0).
+        sku: Identificador único del producto.
+        nombre: Nombre descriptivo.
+        categoria: Categoría a la que pertenece.
+        precio: Precio unitario (debe ser número >= 0).
+        stock: Cantidad actual (entero >= 0).
+        stock_minimo: Nivel mínimo aceptable (entero >= 0).
 
     Returns:
-        tuple: (es_valido: bool, mensaje_error: str | None).
-            Si es valido, mensaje_error es None.
+        Tupla (es_valido, mensaje_error). Si todo bien, el error es None.
     """
     if not validar_sku(sku):
         return False, "SKU vacio o invalido"
 
     if not nombre or not str(nombre).strip():
         return False, "Nombre vacio"
+
+    # Categoría también es obligatoria, no queremos productos huérfanos
+    if not categoria or not str(categoria).strip():
+        return False, "Categoria vacia"
 
     if not validar_precio(precio):
         return False, f"Precio invalido: {precio}"

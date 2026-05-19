@@ -14,7 +14,7 @@ ENV/
 .env
 
 # ─── Salidas generadas ───────────────────────────────────────────────────────
-outputs/
+# No ignoramos outputs/ porque el profe quiere ver el reporte generado
 
 # ─── Distribución / empaquetado ──────────────────────────────────────────────
 dist/

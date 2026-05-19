@@ -1,18 +1,19 @@
-"""Modelo de dominio que representa un producto del inventario."""
-
-from __future__ import annotations
+"""Modelo de dominio: el protagonista del inventario, el Producto."""
 
 
 class Producto:
-    """Representa un producto en el inventario.
+    """Representa un producto en el inventario de la tienda.
+
+    Cada producto sabe su precio, cuántas unidades quedan y si ya
+    es hora de pedir más al proveedor (spoiler: casi siempre sí).
 
     Attributes:
-        sku: Identificador único del producto (Stock Keeping Unit).
-        nombre: Nombre descriptivo del producto.
-        categoria: Categoría a la que pertenece el producto.
-        precio: Precio unitario del producto (>= 0).
-        stock: Cantidad actual en existencia (>= 0).
-        stock_minimo: Cantidad mínima requerida antes de reordenar (>= 0).
+        sku: Identificador único tipo 'SKU001'. Como su CURP pero de producto.
+        nombre: Nombre descriptivo, e.g. 'Laptop HP'.
+        categoria: A qué familia pertenece (Electrónica, Accesorios, etc).
+        precio: Precio unitario en pesos (>= 0, ojalá no sea gratis).
+        stock: Cuántas unidades hay ahorita en bodega (>= 0).
+        stock_minimo: Cuántas debería haber como mínimo antes de hacer pedido.
     """
 
     def __init__(
@@ -34,22 +35,26 @@ class Producto:
     # ─── Métodos de negocio ───────────────────────────────────────────────────
 
     def necesita_reorden(self) -> bool:
-        """Retorna True si el stock actual está por debajo del mínimo."""
+        """¿Ya se nos están acabando? True si el stock bajó del mínimo."""
         return self.stock < self.stock_minimo
 
     def unidades_faltantes(self) -> int:
-        """Retorna cuántas unidades faltan para alcanzar el stock mínimo."""
+        """Cuántas unidades hay que pedir para llegar al mínimo.
+
+        Si no necesita reorden, retorna 0 (estamos bien, relax).
+        """
         if self.necesita_reorden():
             return self.stock_minimo - self.stock
         return 0
 
     def valor_inventario(self) -> float:
-        """Retorna el valor total del inventario actual (precio × stock)."""
+        """Cuánto vale lo que tenemos en bodega (precio × stock actual)."""
         return self.precio * self.stock
 
     # ─── Representación ───────────────────────────────────────────────────────
 
     def __str__(self) -> str:
+        """Versión bonita para mostrar al usuario, con etiqueta de estado."""
         estado = "[REORDEN]" if self.necesita_reorden() else "[OK]"
         return (
             f"{estado} {self.sku}: {self.nombre} "
@@ -57,6 +62,7 @@ class Producto:
         )
 
     def __repr__(self) -> str:
+        """Versión técnica para debugging, por si algo se rompe a las 3am."""
         return (
             f"Producto('{self.sku}', '{self.nombre}', '{self.categoria}', "
             f"{self.precio}, {self.stock}, {self.stock_minimo})"

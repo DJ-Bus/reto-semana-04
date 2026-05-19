@@ -1,40 +1,47 @@
-"""Funciones de lectura y escritura de archivos CSV para el sistema de inventario."""
+"""Funciones de lectura y escritura CSV para el inventario.
+
+Todo lo que toca archivos vive aquí. Si algo no lee o no escribe bien,
+ya sabes dónde buscar el culpable.
+"""
+
+from pathlib import Path
 
 
 def leer_inventario(ruta_archivo: str) -> list[dict]:
-    """Lee el archivo de inventario CSV y retorna una lista de diccionarios.
+    """Lee el CSV del inventario y lo convierte en una lista de diccionarios.
 
-    Cada diccionario tiene como claves los encabezados del CSV y como valores
-    los datos de cada producto en formato texto. Solo se incluyen las lineas
-    que tienen exactamente el mismo numero de columnas que el encabezado.
+    Cada diccionario tiene como llaves los encabezados del CSV y como
+    valores los datos en texto (después los validamos y convertimos).
+    Las líneas con columnas de más o de menos se ignoran en silencio.
 
     Args:
-        ruta_archivo: Ruta al archivo CSV de inventario.
+        ruta_archivo: Ruta al archivo CSV, e.g. 'data/inventario.csv'.
 
     Returns:
         Lista de diccionarios con los datos crudos de cada producto.
 
     Raises:
-        FileNotFoundError: Si el archivo no existe en la ruta indicada.
+        FileNotFoundError: Si el archivo no existe (obvio, no somos magos).
     """
     productos_raw = []
 
     with open(ruta_archivo, "r", encoding="utf-8") as archivo:
         lineas = archivo.readlines()
 
-        # Si el archivo esta vacio, retornar lista vacia
+        # Archivo vacío = nada que hacer, nos vamos temprano a casa
         if not lineas:
             return productos_raw
 
         encabezados = lineas[0].strip().split(",")
 
-        # Procesar cada linea de datos (omitir encabezado)
+        # Recorrer cada línea saltando el encabezado
         for linea in lineas[1:]:
             linea = linea.strip()
             if not linea:
                 continue
 
             valores = linea.split(",")
+            # Solo aceptamos líneas con el número exacto de columnas
             if len(valores) == len(encabezados):
                 producto_dict = dict(zip(encabezados, valores))
                 productos_raw.append(producto_dict)
@@ -43,14 +50,14 @@ def leer_inventario(ruta_archivo: str) -> list[dict]:
 
 
 def escribir_reporte(productos: list, ruta_archivo: str) -> None:
-    """Escribe el reporte de productos que necesitan reorden en un archivo CSV.
+    """Genera el CSV de reporte con los productos que necesitan reorden.
 
-    El archivo generado incluye los encabezados y una linea por cada producto
-    de la lista recibida.
+    El archivo incluye encabezados y una línea por producto,
+    con datos calculados como unidades faltantes y valor del inventario.
 
     Args:
-        productos: Lista de objetos Producto a incluir en el reporte.
-        ruta_archivo: Ruta donde se guardara el archivo CSV de salida.
+        productos: Lista de objetos Producto a reportar.
+        ruta_archivo: Dónde guardar el CSV de salida.
     """
     encabezados = [
         "sku",
@@ -62,11 +69,12 @@ def escribir_reporte(productos: list, ruta_archivo: str) -> None:
         "valor_inventario",
     ]
 
+    # Por si la carpeta outputs/ todavía no existe, la creo y así no me truena nada
+    Path(ruta_archivo).parent.mkdir(parents=True, exist_ok=True)
+
     with open(ruta_archivo, "w", encoding="utf-8") as archivo:
-        # Escribir encabezados
         archivo.write(",".join(encabezados) + "\n")
 
-        # Escribir una linea por cada producto
         for p in productos:
             linea = (
                 f"{p.sku},{p.nombre},{p.categoria},{p.stock},"
